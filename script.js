@@ -6,6 +6,47 @@ const previewElement = document.getElementById('previewText');
 const sendButton = document.getElementById('sendButton');
 const messagesArea = document.getElementById('messagesArea');
 
+// === SONS ===
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+// Fonction pour jouer un son
+function playSound(frequency, duration, type = 'sine') {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = frequency;
+    oscillator.type = type;
+
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+}
+
+// Sons spécifiques
+function clickSound() {
+    playSound(800, 0.05, 'square');
+}
+
+function errorSound() {
+    playSound(200, 0.1, 'sawtooth');
+}
+
+function successSound() {
+    playSound(600, 0.1);
+    setTimeout(() => playSound(800, 0.15), 50);
+    setTimeout(() => playSound(1000, 0.2), 100);
+}
+
+function sendSound() {
+    playSound(1200, 0.05);
+    setTimeout(() => playSound(1400, 0.1), 60);
+}
+
 // Mettre à jour la prévisualisation
 function updatePreview() {
     if (currentText.trim() === '') {
@@ -22,6 +63,8 @@ function updatePreview() {
 // Envoyer le message
 function sendMessage() {
     if (currentText.trim() === '') return;
+
+    sendSound(); // Son d'envoi
 
     // Créer le message
     const messageDiv = document.createElement('div');
@@ -80,12 +123,15 @@ document.querySelectorAll('.key[data-key]').forEach(key => {
     key.addEventListener('click', function () {
         if (this.classList.contains('disabled')) {
             // Effet de refus
+            errorSound(); // Son d'erreur
             this.style.background = 'rgba(255, 0, 0, 0.3)';
             setTimeout(() => {
                 this.style.background = '';
             }, 200);
             return;
         }
+
+        clickSound(); // Son de clic
 
         const char = this.dataset.key;
 
@@ -100,6 +146,7 @@ document.querySelectorAll('.key[data-key]').forEach(key => {
 
         // Vérifier si "beer" est complet
         if (currentPosition === beerSequence.length) {
+            successSound(); // Son de succès
             currentPosition = 0;
             currentText += ' ';
         }
@@ -112,6 +159,8 @@ document.querySelectorAll('.key[data-key]').forEach(key => {
 // Fonction backspace
 function backspace() {
     if (currentText.length === 0) return;
+
+    clickSound(); // Son pour backspace
 
     // Retirer le dernier caractère
     currentText = currentText.slice(0, -1);
@@ -132,6 +181,9 @@ function addSpace() {
             currentText += beerSequence[currentPosition];
             currentPosition++;
         }
+        successSound(); // Son de succès pour auto-complete
+    } else {
+        clickSound();
     }
     currentText += ' ';
     currentPosition = 0;
@@ -145,6 +197,7 @@ function autoComplete() {
         currentText += beerSequence[currentPosition];
         currentPosition++;
     }
+    successSound(); // Son de succès
     currentText += ' ';
     currentPosition = 0;
     updatePreview();
